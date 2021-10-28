@@ -14,7 +14,7 @@ print(df.info())
 #             fontsize=12,labels=my_labels, colors=['lightgreen', 'red'], autopct='%1.1f%%', figsize=(13,13)).yaxis.set_visible(False)
 
 attacks = df[df['is_attack'] == 1]
-normal = df[df['is_attack'] != 1].sample(n=240147)
+normal = df[df['is_attack'] != 1].sample(n=106732)
 frames = [normal, attacks]
 df = pd.concat(frames)
 print(df)
