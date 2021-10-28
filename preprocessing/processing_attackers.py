@@ -5,7 +5,7 @@ import time
 df = pd.read_csv("dataset1_fix.csv", low_memory=False, header=0)
 
 print(df.dtypes)
-n
+
 attacks_df = pd.read_csv("attack_list2.csv", low_memory=False, header=0)
 start = time.time()
 for index, row in attacks_df.iterrows():

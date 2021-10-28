@@ -1,8 +1,8 @@
 import numpy as np, random, operator, pandas as pd, matplotlib.pyplot as plt, time, random
 from ipaddress import IPv4Address, ip_network
 
-df = pd.read_csv("preprocessing/dataset1_fix2.csv", low_memory=False, header=0)
-df.drop_duplicates(subset=['src', 'sport', 'dst', 'dport', 'proto', 'ttl', 'len', 'flags', 'attack_id'], inplace=True)
+df = pd.read_csv("preprocessing/dataset1_downsampled.csv", low_memory=False, header=0)
+df = df.sample(n=10000)
 print(len(df))
 print(df.dtypes)
 attacks = df[df['is_attack'] == 1]
@@ -105,16 +105,16 @@ class Packet:
             [src_bits, sport_bits, dst_bits, dport_bits, proto_bits, ttl_bits, pkt_len_bits, flags_bits])
         return chromosome
 
-    def match_packets(self, row):
-        if (IPv4Address(row['src']) not in self.src_network) or (IPv4Address(row['dst']) not in self.dst_network) \
-                or (self.sport != 0 and row['sport'] != self.sport) or (
-                self.dport != 0 and row['dport'] != self.dport) \
-                or (self.proto != 0 and row['proto'] != self.proto):
+    def match_packet(self, packet):
+        if (IPv4Address(packet['src']) not in self.src_network) or (IPv4Address(packet['dst']) not in self.dst_network) \
+                or (self.sport != 0 and packet['sport'] != self.sport) or (
+                self.dport != 0 and packet['dport'] != self.dport) \
+                or (self.proto != 0 and packet['proto'] != self.proto):
             return 0
-        if row['is_attack'] == 1:
+        if packet['is_attack'] == 1:
             return 1
         else:
-            return -1
+            return -10
 
     def __repr__(self):
         return f"({self.src}:{self.sport})->({self.dst}:{self.dport}), proto:{self.proto},ttl: {self.ttl}, " \
@@ -127,15 +127,20 @@ class Fitness:
 
     def calculate_fitness(self, chromosomes: list[Packet]):
         fitness_results = {}
+        not_calculated = []
         for i in range(0, len(chromosomes)):
             if repr(chromosomes[i]) not in self.results.keys():
-                score = 0
-                for index, row in df.iterrows():
-                    score += chromosomes[i].match_packets(row)
-                fitness_results[i] = score
-                self.results[repr(chromosomes[i])] = score
+                not_calculated.append(i)
+                self.results[repr(chromosomes[i])] = 0
             else:
                 fitness_results[i] = self.results[repr(chromosomes[i])]
+
+        for index, row in df.iterrows():
+            for i in not_calculated:
+                self.results[repr(chromosomes[i])] += chromosomes[i].match_packet(row)
+
+        for i in not_calculated:
+            fitness_results[i] = self.results[repr(chromosomes[i])]
         return sorted(fitness_results.items(), key=operator.itemgetter(1), reverse=True)
 
 
@@ -171,7 +176,7 @@ class CreatePacket:
             src_ip_parts.append("0") if random.random() < .3 else src_ip_parts.append(ip)
         src_ip = ".".join(src_ip_parts)
         src_port = random.choice(self.src_ports) if random.random() < .5 else random.choice(self.src_ports_attack)
-        src_port = src_port if random.random() < .2 else 0
+        src_port = src_port if random.random() < .1 else 0
         temp_ip_dst = random.choice(self.dst_ips) if random.random() < .5 else random.choice(self.dst_ips_attack)
         dst_ip_parts = []
         for ip in temp_ip_dst.split("."):
@@ -222,20 +227,25 @@ def geneticAlgorithmPlot(popSize, eliteSize, mutationRate, generations):
         print(repr(packet))
     progress = []
     fitness = Fitness()
+    start_time = time.time()
     current_fitness = fitness.calculate_fitness(population)
+    print(current_fitness)
+    print(population[current_fitness[0][0]])
+    print("Fitness calculation time: {}".format(time.time() - start_time))
     progress.append(current_fitness[0][1])
 
     for i in range(0, generations):
         start_time = time.time()
-        print("generation {}, fitness: {}, time spent: {}".format(i+1, current_fitness[0][1], time.time() - start_time))
+        # print("generation {}, fitness: {}, time spent: {}".format(i+1, current_fitness[0][1], time.time() - start_time))
         progress.append(current_fitness[0][1])
         # pop = nextGeneration(pop, eliteSize, mutationRate)
         # progress.append(1 / rankRoutes(pop)[0][1])
 
-    plt.plot(progress)
-    plt.ylabel('Distance')
-    plt.xlabel('Generation')
-    plt.show()
+    # plt.plot(progress)
+    # plt.ylabel('Distance')
+    # plt.xlabel('Generation')
+    # plt.show()
+
 
 geneticAlgorithmPlot(popSize=100, eliteSize=20, mutationRate=0.01, generations=500)
 # fitness = Fitness()
