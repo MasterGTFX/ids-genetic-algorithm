@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 
 
 df = pd.read_csv("dataset1_fix2.csv", low_memory=False, header=0)
+print(df.info())
+print(df.describe())
 my_labels = ['Normalny', "Atak"]
 # df['is_attack'].value_counts().plot(kind='pie', title="Typ ruchu sieciowego",
 #             fontsize=12,labels=my_labels, colors=['lightgreen', 'red'], autopct='%1.1f%%', figsize=(13,13)).yaxis.set_visible(False)
@@ -25,8 +27,9 @@ df['is_attack'].value_counts().plot(kind='pie', title="Typ ruchu sieciowego (po 
 plt.show()
 print(len(df[df['is_attack']==1]), len(df), len(df[df['is_attack']==1])*100/len(df))
 
-df['sport'] = df['sport'].apply(lambda x: x if pd.isnull(x) else str(int(x)))
-df['dport'] = df['dport'].apply(lambda x: x if pd.isnull(x) else str(int(x)))
-df['ttl'] = df['ttl'].apply(lambda x: x if pd.isnull(x) else str(int(x)))
-df['len'] = df['len'].apply(lambda x: x if pd.isnull(x) else str(int(x)))
+df['sport'] = df['sport'].apply(lambda x: 0 if pd.isnull(x) else str(int(x)))
+df['dport'] = df['dport'].apply(lambda x: 0 if pd.isnull(x) else str(int(x)))
+df['ttl'] = df['ttl'].apply(lambda x: 0 if pd.isnull(x) else str(int(x)))
+df['len'] = df['len'].apply(lambda x: 0 if pd.isnull(x) else str(int(x)))
+
 df.to_csv(f'dataset1_downsampled.csv', index=False)

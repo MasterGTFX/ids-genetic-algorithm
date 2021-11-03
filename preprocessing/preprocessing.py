@@ -15,6 +15,8 @@ udp_fields = [field.name for field in UDP().fields_desc]
 print(ip_fields)
 print(tcp_fields)
 print(udp_fields)
+# TBD len != len of ip header
+# TBD flags, change this field
 dataframe_IP_fields = ['src', 'dst', 'ttl', 'proto', 'flags',  'len']
 time_field = ['time']
 dataframe_L4_fields = ['sport', 'dport']
